@@ -1,17 +1,40 @@
 local IMAGE_PATH = "./keyboard_layout.png"
 
 local imageCanvas = nil
+local cachedImage = nil
 
 local function hideImage()
     if imageCanvas then
+        -- Clear all canvas elements first
+        imageCanvas:replaceElements()
+        imageCanvas:hide()
         imageCanvas:delete()
         imageCanvas = nil
+        -- Force garbage collection
+        collectgarbage("collect")
     end
+end
+
+local function loadImageOnce()
+    if not cachedImage then
+        cachedImage = hs.image.imageFromPath(IMAGE_PATH)
+        if not cachedImage then
+            hs.alert.show("Could not load image: " .. IMAGE_PATH)
+            return nil
+        end
+    end
+    return cachedImage
 end
 
 local function showImage()
     if imageCanvas then
         hideImage() -- Hide existing canvas first
+    end
+
+    -- Get the cached image
+    local image = loadImageOnce()
+    if not image then
+        return
     end
 
     -- Get the main screen dimensions
@@ -22,15 +45,7 @@ local function showImage()
         h = 994.0,
     }
 
-    -- Load the image
-    local image = hs.image.imageFromPath(IMAGE_PATH)
-    if not image then
-        hs.alert.show("Could not load image: " .. IMAGE_PATH)
-        return
-    end
-
     local imageSize = image:size()
-
     -- Resize for my use-cases
     imageSize = {
         w = imageSize.w * 2/3,
@@ -50,11 +65,11 @@ local function showImage()
     })
 
     -- Add the image to canvas
-    imageCanvas[1] = {
+    imageCanvas:appendElements({
         type = "image",
         image = image,
         frame = { x = 0, y = 0, w = imageSize.w, h = imageSize.h }
-    }
+    })
 
     imageCanvas:level(hs.canvas.windowLevels.overlay)
     imageCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
@@ -87,10 +102,16 @@ keyTap:start()
 local function cleanup()
     if keyTap then
         keyTap:stop()
+        keyTap = nil
     end
     hideImage()
+    -- Release the cached image
+    if cachedImage then
+        cachedImage = nil
+    end
+    -- Force garbage collection
+    collectgarbage("collect")
 end
 
 -- Register cleanup for when Hammerspoon reloads
 hs.shutdownCallback = cleanup
-

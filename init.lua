@@ -48,8 +48,8 @@ local function showImage()
     local imageSize = image:size()
     -- Resize for my use-cases
     imageSize = {
-        w = imageSize.w * 2/3,
-        h = imageSize.h * 2/3,
+        w = imageSize.w * 2 / 3,
+        h = imageSize.h * 2 / 3,
     }
 
     -- Calculate position to center the image
@@ -80,7 +80,7 @@ local function keyEventHandler(event)
     local keyCode = event:getKeyCode()
     local eventType = event:getType()
 
-    if keyCode == 79 then  -- F18
+    if keyCode == 79 then -- F18
         if eventType == hs.eventtap.event.types.keyDown then
             showImage()
             return true -- Consume the event
@@ -98,6 +98,11 @@ local keyTap = hs.eventtap.new({
 }, keyEventHandler)
 
 keyTap:start()
+
+
+-- disable command + q behavior of MacOS
+hs.hotkey.bind({ "cmd" }, "q", function() end)
+
 
 local function cleanup()
     if keyTap then
